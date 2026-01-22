@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validator - Serviceportal</title>
+    <style>
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #fff;
+        }
+        header {
+            background-color: #ffed00;
+            padding: 20px 40px;
+            border-bottom: 1px solid #ddd;
+        }
+        .logo {
+            font-weight: bold;
+            font-size: 24px;
+            color: #000;
+        }
+        main {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .upload-box {
+            border: 2px dashed #ccc;
+            padding: 40px;
+            text-align: center;
+            background-color: #f9f9f9;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        .upload-box:hover {
+            border-color: #999;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .btn {
+            background-color: #e6e6e6;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            float: right;
+        }
+        .btn:hover {
+            background-color: #ddd;
+        }
+        footer {
+            background-color: #333;
+            color: #fff;
+            padding: 20px;
+            text-align: center;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">Serviceportal <span style="font-weight: normal;">Validator</span></div>
+    </header>
+    <main>
+        <h1>Validator</h1>
+        <p class="subtitle">Prüfen Sie hier Ihre elektronischen Rechnungen (XRechnung / ZUGFeRD).</p>
+        
+        <form action="/validate" method="post" enctype="multipart/form-data">
+            <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+                <p id="fileNameDisplay">Datei (XML) zum Hochladen auswählen oder hierher ziehen.</p>
+                <input type="file" name="file" id="fileInput" onchange="updateFileName()">
+            </div>
+            <button type="submit" class="btn">Prüfen</button>
+        </form>
+    </main>
+    <script>
+        function updateFileName() {
+            const input = document.getElementById('fileInput');
+            const display = document.getElementById('fileNameDisplay');
+            if (input.files.length > 0) {
+                display.innerText = "Ausgewählte Datei: " + input.files[0].name;
+            }
+        }
+    </script>
+</body>
+</html>
