@@ -3,59 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prüfergebnis - Validator</title>
+    <title>Prüfergebnis – E-Rechnung Validator</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
         body {
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
             margin: 0;
             padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: #fff;
+            color: #222;
         }
+
         header {
-            background-color: #ffed00;
+            background-color: #0d1b2a;
             padding: 20px 40px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
         main {
-            max-width: 800px;
-            margin: 40px auto;
+            max-width: 720px;
+            margin: 60px auto;
             padding: 0 20px;
         }
+
+        h1 {
+            font-size: 36px;
+            margin-bottom: 12px;
+            font-weight: 700;
+            color: #0d1b2a;
+        }
+
+        p {
+            font-size: 16px;
+            color: #555;
+            margin-bottom: 24px;
+        }
+
         .status {
             padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 4px;
+            margin-bottom: 30px;
+            border-radius: 12px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            font-size: 16px;
         }
+
         .success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background-color: #e6f4ea;
+            color: #1b472a;
+            border: 1px solid #b2dbbe;
         }
+
         .error {
-            background-color: #f8d7da;
+            background-color: #fde6e6;
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+
         pre {
-            background-color: #f4f4f4;
-            padding: 15px;
-            overflow-x: auto;
+            background-color: #f7f8fa;
+            padding: 16px;
+            border-radius: 8px;
             border: 1px solid #ddd;
+            overflow-x: auto;
+            font-size: 14px;
+            color: #333;
         }
+
         .btn {
             display: inline-block;
-            background-color: #e6e6e6;
-            padding: 10px 20px;
+            background-color: #0d1b2a;
+            color: #fff;
             text-decoration: none;
-            color: #333;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
             margin-top: 20px;
+        }
+
+        .btn:hover {
+            background-color: #0a1624;
+            transform: translateY(-1px);
+        }
+
+        footer {
+            background-color: #0d1b2a;
+            color: #eee;
+            text-align: center;
+            padding: 18px;
+            font-size: 14px;
+            margin-top: 80px;
         }
     </style>
 </head>
 <body>
     <header>
-        <div style="font-weight: bold; font-size: 24px;">Serviceportal <span style="font-weight: normal;">Validator</span></div>
+        <div class="logo">E-Rechnung <span style="font-weight: 400;">Validator</span></div>
     </header>
+
     <main>
         <h1>Prüfergebnis</h1>
         <p>Datei: <strong>{{ filename }}</strong></p>
@@ -73,5 +126,7 @@
 
         <a href="/" class="btn">Zurück zur Startseite</a>
     </main>
+    <footer>
+    </footer>
 </body>
 </html>

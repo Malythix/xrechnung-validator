@@ -3,98 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Validator - Serviceportal</title>
+    <title>E-Rechnung Validator</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
         body {
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
             margin: 0;
             padding: 0;
+            font-family: 'Inter', sans-serif;
             background-color: #fff;
+            color: #222;
         }
+
         header {
-            background-color: #ffed00;
+            background-color: #0d1b2a;
             padding: 20px 40px;
-            border-bottom: 1px solid #ddd;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
+
         .logo {
-            font-weight: bold;
-            font-size: 24px;
-            color: #000;
+            font-size: 28px;
+            font-weight: 700;
+            color: #ffffff;
         }
+
         main {
-            max-width: 800px;
-            margin: 40px auto;
+            max-width: 720px;
+            margin: 60px auto;
             padding: 0 20px;
         }
+
         h1 {
-            font-size: 32px;
-            margin-bottom: 10px;
+            font-size: 36px;
+            margin-bottom: 8px;
+            font-weight: 700;
+            color: #0d1b2a;
         }
+
         .subtitle {
             font-size: 18px;
-            color: #666;
-            margin-bottom: 30px;
+            color: #555;
+            margin-bottom: 28px;
         }
+
         .upload-box {
-            border: 2px dashed #ccc;
-            padding: 40px;
+            border: 2px dashed #bbb;
+            border-radius: 10px;
+            padding: 48px 20px;
             text-align: center;
-            background-color: #f9f9f9;
-            margin-bottom: 20px;
+            background: #fafafa;
+            font-size: 16px;
+            color: #444;
+            transition: all 0.3s ease;
             cursor: pointer;
         }
+
         .upload-box:hover {
-            border-color: #999;
+            border-color: #0d1b2a;
+            background: #f0f4f8;
+            color: #222;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
+
         input[type="file"] {
             display: none;
         }
+
         .btn {
-            background-color: #e6e6e6;
-            border: none;
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            float: right;
-        }
-        .btn:hover {
-            background-color: #ddd;
-        }
-        footer {
-            background-color: #333;
+            background-color: #0d1b2a;
             color: #fff;
-            padding: 20px;
+            border: none;
+            padding: 12px 28px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            float: right;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            background-color: #0a1624;
+            transform: translateY(-1px);
+        }
+
+        footer {
+            background-color: #0d1b2a;
+            color: #eee;
             text-align: center;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
+            padding: 18px;
+            font-size: 14px;
+            margin-top: 80px;
         }
     </style>
 </head>
 <body>
     <header>
-        <div class="logo">Serviceportal <span style="font-weight: normal;">Validator</span></div>
+        <div class="logo">E-Rechnung <span style="font-weight: 400;">Validator</span></div>
     </header>
     <main>
         <h1>Validator</h1>
-        <p class="subtitle">Prüfen Sie hier Ihre elektronischen Rechnungen (XRechnung / ZUGFeRD).</p>
+        <p class="subtitle">Prüft elektronische Rechnungen (XRechnung / ZUGFeRD) zuverlässig und intuitiv.</p>
         
         <form action="/validate" method="post" enctype="multipart/form-data">
             <div class="upload-box" onclick="document.getElementById('fileInput').click()">
-                <p id="fileNameDisplay">Datei (XML) zum Hochladen auswählen oder hierher ziehen.</p>
+                <p id="fileNameDisplay">Wählen Sie eine XML-Datei zum Hochladen oder ziehen Sie sie hierher.</p>
                 <input type="file" name="file" id="fileInput" onchange="updateFileName()">
             </div>
             <button type="submit" class="btn">Prüfen</button>
         </form>
     </main>
+    <footer>
+    </footer>
     <script>
         function updateFileName() {
             const input = document.getElementById('fileInput');
             const display = document.getElementById('fileNameDisplay');
             if (input.files.length > 0) {
                 display.innerText = "Ausgewählte Datei: " + input.files[0].name;
+            } else {
+                display.innerText = "Wählen Sie eine XML‑Datei zum Hochladen oder ziehen Sie sie hierher.";
             }
         }
     </script>
