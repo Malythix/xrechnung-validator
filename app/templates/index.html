@@ -7,12 +7,19 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
             padding: 0;
             font-family: 'Inter', sans-serif;
-            background-color: #fff;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
             color: #222;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         header {
@@ -31,6 +38,7 @@
             max-width: 720px;
             margin: 60px auto;
             padding: 0 20px;
+            flex: 1;
         }
 
         h1 {
@@ -51,23 +59,56 @@
             border-radius: 10px;
             padding: 48px 20px;
             text-align: center;
-            background: #fafafa;
+            background: white;
             font-size: 16px;
             color: #444;
             transition: all 0.3s ease;
             cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
 
         .upload-box:hover {
             border-color: #0d1b2a;
-            background: #f0f4f8;
+            background: #f8fafb;
             color: #222;
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
 
+        .upload-box.dragover {
+            border-color: #0d1b2a;
+            background: #f0f4f8;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .upload-text {
+            margin: 0;
+        }
+
+        .upload-text-main {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .upload-text-sub {
+            font-size: 14px;
+            color: #888;
+        }
+
         input[type="file"] {
             display: none;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            justify-content: center;
         }
 
         .btn {
@@ -80,13 +121,133 @@
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
-            float: right;
-            margin-top: 20px;
         }
 
         .btn:hover {
             background-color: #0a1624;
             transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background-color: #e8eef5;
+            color: #0d1b2a;
+            border: 1px solid #d0dae8;
+        }
+
+        .btn-secondary:hover {
+            background-color: #d0dae8;
+        }
+
+        .progress-container {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .progress-container.visible {
+            display: block;
+        }
+
+        .progress-title {
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #0d1b2a;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e8eef5;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0d1b2a, #1a2f4a);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .progress-text {
+            font-size: 14px;
+            color: #888;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .progress-step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #555;
+            margin-top: 8px;
+        }
+
+        .progress-step-icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #e8eef5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .progress-step.active .progress-step-icon {
+            background: #0d1b2a;
+            color: white;
+            animation: pulse 1s infinite;
+        }
+
+        .progress-step.done .progress-step-icon {
+            background: #4caf50;
+            color: white;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .file-info {
+            display: none;
+            margin-top: 15px;
+            padding: 12px;
+            background: #f0f4f8;
+            border-radius: 8px;
+            border-left: 4px solid #0d1b2a;
+        }
+
+        .file-info.visible {
+            display: block;
+        }
+
+        .file-info-text {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .file-info-name {
+            font-weight: 600;
+            color: #0d1b2a;
+            word-break: break-all;
         }
 
         footer {
@@ -95,7 +256,29 @@
             text-align: center;
             padding: 18px;
             font-size: 14px;
-            margin-top: 80px;
+            margin-top: auto;
+        }
+
+        @media (max-width: 768px) {
+            main {
+                margin: 40px auto;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            .upload-box {
+                padding: 36px 16px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -103,29 +286,185 @@
     <header>
         <div class="logo">E-Rechnung <span style="font-weight: 400;">Validator</span></div>
     </header>
+
     <main>
         <h1>Validator</h1>
         <p class="subtitle">Prüft elektronische Rechnungen (XRechnung / ZUGFeRD) zuverlässig und intuitiv.</p>
         
-        <form action="/validate" method="post" enctype="multipart/form-data">
-            <div class="upload-box" onclick="document.getElementById('fileInput').click()">
-                <p id="fileNameDisplay">Wählen Sie eine XML-Datei zum Hochladen oder ziehen Sie sie hierher.</p>
-                <input type="file" name="file" id="fileInput" onchange="updateFileName()">
+        <form id="uploadForm" action="/validate" method="post" enctype="multipart/form-data">
+            <div class="upload-box" id="uploadBox" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon">📄</div>
+                <p class="upload-text">
+                    <span class="upload-text-main" id="fileNameDisplay">XML-Datei hochladen</span>
+                    <span class="upload-text-sub">Klicken oder ziehen Sie die Datei hierher</span>
+                </p>
+                <input type="file" name="file" id="fileInput" accept=".xml" onchange="handleFileSelect()">
             </div>
-            <button type="submit" class="btn">Prüfen</button>
+
+            <div class="file-info" id="fileInfo">
+                <div class="file-info-text">
+                    Ausgewählte Datei: <span class="file-info-name" id="fileInfoName"></span>
+                </div>
+            </div>
+
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-title">Validierung läuft...</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text">
+                    <span id="progressPercent">0%</span>
+                    <span id="progressTime">Verarbeitung...</span>
+                </div>
+                <div id="progressSteps"></div>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn" id="submitBtn" disabled>Prüfen</button>
+                <button type="reset" class="btn btn-secondary" id="resetBtn">Zurücksetzen</button>
+            </div>
         </form>
     </main>
-    <footer>
-    </footer>
+
+    <footer></footer>
+
     <script>
-        function updateFileName() {
-            const input = document.getElementById('fileInput');
-            const display = document.getElementById('fileNameDisplay');
-            if (input.files.length > 0) {
-                display.innerText = "Ausgewählte Datei: " + input.files[0].name;
-            } else {
-                display.innerText = "Wählen Sie eine XML‑Datei zum Hochladen oder ziehen Sie sie hierher.";
+        const uploadBox = document.getElementById('uploadBox');
+        const fileInput = document.getElementById('fileInput');
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileInfoName = document.getElementById('fileInfoName');
+        const submitBtn = document.getElementById('submitBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const uploadForm = document.getElementById('uploadForm');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressPercent = document.getElementById('progressPercent');
+        const progressSteps = document.getElementById('progressSteps');
+
+        const steps = [
+            { name: 'Datei hochgeladen', id: 'upload' },
+            { name: 'Validator wird gestartet', id: 'start' },
+            { name: 'XML Schema wird validiert', id: 'schema' },
+            { name: 'Schematron Regeln werden geprüft', id: 'schematron' },
+            { name: 'Bericht wird generiert', id: 'report' }
+        ];
+
+        let currentStep = 0;
+        let startTime = null;
+
+        // Drag and drop
+        uploadBox.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadBox.classList.add('dragover');
+        });
+
+        uploadBox.addEventListener('dragleave', () => {
+            uploadBox.classList.remove('dragover');
+        });
+
+        uploadBox.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadBox.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect();
             }
+        });
+
+        function handleFileSelect() {
+            const file = fileInput.files[0];
+            if (file) {
+                fileNameDisplay.textContent = `✓ ${file.name}`;
+                fileInfoName.textContent = file.name;
+                fileInfo.classList.add('visible');
+                submitBtn.disabled = false;
+            } else {
+                resetForm();
+            }
+        }
+
+        function resetForm() {
+            fileInput.value = '';
+            fileNameDisplay.textContent = 'XML-Datei hochladen';
+            fileInfo.classList.remove('visible');
+            progressContainer.classList.remove('visible');
+            submitBtn.disabled = true;
+            currentStep = 0;
+        }
+
+        resetBtn.addEventListener('click', resetForm);
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!fileInput.files[0]) return;
+
+            startTime = Date.now();
+            currentStep = 0;
+            progressContainer.classList.add('visible');
+            submitBtn.disabled = true;
+
+            // Simulate progress
+            const progressInterval = setInterval(() => {
+                const elapsed = (Date.now() - startTime) / 1000;
+                const progress = Math.min(90, (elapsed / 30) * 100);
+                progressFill.style.width = progress + '%';
+                progressPercent.textContent = Math.round(progress) + '%';
+                progressTime.textContent = `${Math.round(elapsed)}s verstrichen`;
+
+                // Update step indicator
+                const stepIndex = Math.floor((progress / 100) * steps.length);
+                updateStepIndicator(stepIndex);
+            }, 200);
+
+            try {
+                const formData = new FormData(uploadForm);
+                const response = await fetch('/validate', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                clearInterval(progressInterval);
+                progressFill.style.width = '100%';
+                progressPercent.textContent = '100%';
+                updateStepIndicator(steps.length);
+
+                if (response.ok) {
+                    const html = await response.text();
+                    document.open();
+                    document.write(html);
+                    document.close();
+                } else {
+                    alert('Fehler bei der Validierung. Bitte versuchen Sie es erneut.');
+                    resetForm();
+                }
+            } catch (error) {
+                clearInterval(progressInterval);
+                console.error('Upload error:', error);
+                alert('Fehler beim Hochladen der Datei. Bitte versuchen Sie es erneut.');
+                resetForm();
+            }
+        });
+
+        function updateStepIndicator(stepIndex) {
+            let html = '';
+            steps.forEach((step, index) => {
+                let className = 'progress-step';
+                let icon = '○';
+                
+                if (index < stepIndex) {
+                    className += ' done';
+                    icon = '✓';
+                } else if (index === stepIndex) {
+                    className += ' active';
+                    icon = '⟳';
+                }
+                
+                html += `<div class="${className}"><span class="progress-step-icon">${icon}</span>${step.name}</div>`;
+            });
+            progressSteps.innerHTML = html;
         }
     </script>
 </body>
