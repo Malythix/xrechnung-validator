@@ -44,8 +44,9 @@ def parse_xml_report(xml_path):
             'cac': 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2'
         }
         
-        # Extract overall validity
-        valid = root.get('valid', 'false').lower() == 'true'
+        # Extract overall validity - check the 'valid' attribute on the root element
+        valid_attr = root.get('valid', 'false').lower()
+        valid = (valid_attr == 'true')
         
         # Extract timestamp
         timestamp_elem = root.find('rep:timestamp', namespaces)
@@ -103,19 +104,24 @@ def parse_xml_report(xml_path):
             })
         
         # Extract assessment
-        assessment = {
-            'accepted': root.find('.//rep:assessment/rep:accept', namespaces) is not None,
-            'rejected': root.find('.//rep:assessment/rep:reject', namespaces) is not None
-        }
+        assessment_elem = root.find('.//rep:assessment', namespaces)
+        accepted = False
+        rejected = False
+        if assessment_elem is not None:
+            accepted = assessment_elem.find('rep:accept', namespaces) is not None
+            rejected = assessment_elem.find('rep:reject', namespaces) is not None
+        
+        # Final decision on validity: if the report says valid=true OR assessment says accepted
+        is_actually_valid = valid or accepted
         
         return {
-            'valid': valid,
+            'valid': is_actually_valid,
             'timestamp': timestamp,
             'documentReference': doc_ref,
             'documentData': doc_data,
             'scenario': scenario_name,
             'validationSteps': validation_steps,
-            'assessment': assessment
+            'assessment': {'accepted': accepted, 'rejected': rejected}
         }
     except Exception as e:
         return {

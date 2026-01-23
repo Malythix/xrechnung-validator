@@ -363,16 +363,20 @@
 
         function renderStatusBanner() {
             const container = document.getElementById('status-container');
-            const isValid = reportData.valid;
-            const hasError = reportData.validationSteps.some(step => 
+            
+            // A document is valid if the report says so AND there are no error-level messages
+            const hasErrorMessages = reportData.validationSteps.some(step => 
                 step.messages.some(msg => msg.level === 'error')
             );
+            
+            // Use the valid flag from backend but double check for error messages
+            const isValid = reportData.valid && !hasErrorMessages;
             
             const statusClass = isValid ? 'success' : 'error';
             const statusIcon = isValid ? '✓' : '✕';
             const statusText = isValid 
-                ? 'Die Datei wurde erfolgreich validiert.' 
-                : 'Bei der Validierung wurden Probleme gefunden.';
+                ? 'Die Datei wurde erfolgreich validiert und ist konform.' 
+                : (hasErrorMessages ? 'Bei der Validierung wurden kritische Fehler gefunden.' : 'Die Datei ist nicht konform oder konnte nicht verarbeitet werden.');
 
             container.innerHTML = `
                 <div class="status-banner ${statusClass}">
