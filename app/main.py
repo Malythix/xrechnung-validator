@@ -17,8 +17,8 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(REPORT_DIR, exist_ok=True)
 
 # Pfad zum Validator JAR und Scenarios
-VALIDATOR_JAR = "/home/ubuntu/xrechnung-validator/app/validator.jar"
-SCENARIOS_DIR = "/home/ubuntu/xrechnung-validator/scenarios"
+VALIDATOR_JAR = "/app/validator.jar"
+SCENARIOS_DIR = "/scenarios"
 
 templates = Jinja2Templates(directory="templates")
 
