@@ -2,7 +2,7 @@ import os
 import subprocess
 import uuid
 import xml.etree.ElementTree as ET
-from fastapi import FastAPI, UploadFile, File, Request
+from fastapi import FastAPI, UploadFile, File, Request, StaticFiles
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 import json
