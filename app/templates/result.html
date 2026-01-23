@@ -62,17 +62,69 @@
             gap: 15px;
         }
 
-        .status-banner.success {
-            background-color: #e6f4ea;
-            color: #1b472a;
-            border: 1px solid #b2dbbe;
+        .status-banner.fatal {
+            background-color: #380000;
+            color: #ff9999;
+            border: 2px solid #ff4444;
         }
-
+        
         .status-banner.error {
-            background-color: #fde6e6;
+            background-color: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+        
+        .status-banner.warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .status-banner.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .status-banner.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border-left: 5px solid #0d1b2a;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .stat-error .stat-value { color: #dc3545; }
+        .stat-warning .stat-value { color: #ffc107; }
+        .stat-info .stat-value { color: #17a2b8; }
+        .stat-success .stat-value { color: #28a745; }
 
         .status-icon {
             font-size: 24px;
@@ -185,6 +237,7 @@
             padding: 12px;
             border-bottom: 1px solid #e8eef5;
             color: #555;
+            vertical-align: top;
         }
 
         tbody tr:hover {
@@ -216,17 +269,40 @@
             color: #1565c0;
         }
 
+        .level-information {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .level-fatal {
+            background-color: #380000;
+            color: #ff9999;
+        }
+
         .code {
             font-family: 'Courier New', monospace;
             background-color: #f5f7fa;
             padding: 2px 6px;
             border-radius: 4px;
             font-size: 12px;
+            display: inline-block;
+            margin-bottom: 4px;
         }
 
         .message-text {
             word-break: break-word;
             line-height: 1.5;
+        }
+
+        .message-path {
+            font-family: 'Courier New', monospace;
+            background-color: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+            margin-top: 8px;
+            border-left: 3px solid #ddd;
         }
 
         .action-buttons {
@@ -276,6 +352,36 @@
             font-size: 48px;
             margin-bottom: 15px;
         }
+
+        .validator-output {
+            background-color: #f8f9fa;
+            border: 1px solid #e8eef5;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .category-schema { background-color: #e3f2fd; color: #1565c0; }
+        .category-schematron { background-color: #f3e5f5; color: #7b1fa2; }
+        .category-business_rules { background-color: #e8f5e9; color: #2e7d32; }
+        .category-codelists { background-color: #fff3e0; color: #ef6c00; }
+        .category-syntax { background-color: #ffebee; color: #c62828; }
+        .category-general { background-color: #f5f5f5; color: #616161; }
 
         footer {
             background-color: #0d1b2a;
@@ -335,8 +441,17 @@
         <p class="subtitle">Datei: <strong>{{ filename }}</strong></p>
         
         <div id="status-container"></div>
+        <div class="stats-grid" id="stats-container"></div>
         <div id="document-info"></div>
         <div id="validation-results"></div>
+        
+        {% if validator_output %}
+        <div class="table-container">
+            <h3>Validator Ausgabe</h3>
+            <div class="validator-output">{{ validator_output }}</div>
+        </div>
+        {% endif %}
+        
         <div class="action-buttons">
             <a href="/" class="btn">← Zurück zur Startseite</a>
             <button class="btn btn-secondary" onclick="downloadReport()">⬇ Bericht herunterladen</button>
@@ -351,48 +466,88 @@
 
         function formatDate(dateStr) {
             if (!dateStr || dateStr === 'N/A') return 'N/A';
-            // Try to parse YYYYMMDD format
-            if (dateStr.length === 8) {
-                const year = dateStr.substring(0, 4);
-                const month = dateStr.substring(4, 6);
-                const day = dateStr.substring(6, 8);
-                return `${day}.${month}.${year}`;
+            try {
+                // Try to parse ISO format
+                const date = new Date(dateStr);
+                if (!isNaN(date.getTime())) {
+                    return date.toLocaleDateString('de-DE') + ' ' + date.toLocaleTimeString('de-DE');
+                }
+                
+                // Try to parse YYYYMMDD format
+                if (dateStr.length === 8 && /^\d{8}$/.test(dateStr)) {
+                    const year = dateStr.substring(0, 4);
+                    const month = dateStr.substring(4, 6);
+                    const day = dateStr.substring(6, 8);
+                    return `${day}.${month}.${year}`;
+                }
+                return dateStr;
+            } catch {
+                return dateStr;
             }
-            return dateStr;
         }
 
         function renderStatusBanner() {
             const container = document.getElementById('status-container');
+            const status = reportData.status || 'error';
+            const statusClass = status;
+            const descriptions = {
+                'fatal': 'Kritischer Validierungsfehler',
+                'error': 'Validierung fehlgeschlagen',
+                'warning': 'Validierung mit Warnungen',
+                'success': 'Validierung erfolgreich'
+            };
             
-            // A document is valid if the report says so AND there are no error-level messages
-            const hasErrorMessages = reportData.validationSteps.some(step => 
-                step.messages.some(msg => msg.level === 'error')
-            );
+            const icons = {
+                'fatal': '⛔',
+                'error': '❌',
+                'warning': '⚠️',
+                'success': '✅'
+            };
             
-            // Use the valid flag from backend but double check for error messages
-            const isValid = reportData.valid && !hasErrorMessages;
-            
-            const statusClass = isValid ? 'success' : 'error';
-            const statusIcon = isValid ? '✓' : '✕';
-            const statusText = isValid 
-                ? 'Die Datei wurde erfolgreich validiert und ist konform.' 
-                : (hasErrorMessages ? 'Bei der Validierung wurden kritische Fehler gefunden.' : 'Die Datei ist nicht konform oder konnte nicht verarbeitet werden.');
-
             container.innerHTML = `
                 <div class="status-banner ${statusClass}">
-                    <div class="status-icon">${statusIcon}</div>
+                    <div class="status-icon" style="font-size: 32px;">${icons[status] || '❓'}</div>
                     <div class="status-text">
-                        <strong>${isValid ? 'Validierung erfolgreich' : 'Validierung fehlgeschlagen'}</strong>
-                        ${statusText}
+                        <strong>${descriptions[status] || 'Unbekannter Status'}</strong>
+                        <div style="margin-top: 8px;">${reportData.status_description || ''}</div>
+                        <div style="margin-top: 8px; font-weight: 600;">${reportData.recommendation || ''}</div>
                     </div>
+                </div>
+            `;
+        }
+        
+        function renderStatistics() {
+            const container = document.getElementById('stats-container');
+            const stats = reportData.message_stats || {};
+            
+            container.innerHTML = `
+                <div class="stat-card stat-error">
+                    <div class="stat-label">Fehler</div>
+                    <div class="stat-value">${stats.error || 0}</div>
+                    <div>Kritische Probleme</div>
+                </div>
+                <div class="stat-card stat-warning">
+                    <div class="stat-label">Warnungen</div>
+                    <div class="stat-value">${stats.warning || 0}</div>
+                    <div>Mögliche Probleme</div>
+                </div>
+                <div class="stat-card stat-info">
+                    <div class="stat-label">Informationen</div>
+                    <div class="stat-value">${stats.info || 0}</div>
+                    <div>Hinweise</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Validierungsschritte</div>
+                    <div class="stat-value">${reportData.validationSteps?.length || 0}</div>
+                    <div>Durchgeführte Prüfungen</div>
                 </div>
             `;
         }
 
         function renderDocumentInfo() {
             const container = document.getElementById('document-info');
-            const data = reportData.documentData;
-            const timestamp = reportData.timestamp ? new Date(reportData.timestamp).toLocaleString('de-DE') : 'N/A';
+            const data = reportData.documentData || {};
+            const timestamp = reportData.timestamp ? formatDate(reportData.timestamp) : 'N/A';
 
             let infoHtml = `
                 <div class="grid">
@@ -401,11 +556,15 @@
                         <div class="card-content">
                             <div class="info-row">
                                 <span class="info-label">Dokumenttyp</span>
-                                <span class="info-value">${reportData.scenario}</span>
+                                <span class="info-value">${reportData.scenario || 'N/A'}</span>
                             </div>
                             <div class="info-row">
                                 <span class="info-label">Prüfzeitpunkt</span>
                                 <span class="info-value">${timestamp}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Dokumentreferenz</span>
+                                <span class="info-value">${reportData.documentReference || 'N/A'}</span>
                             </div>
                         </div>
                     </div>
@@ -434,87 +593,97 @@
 
         function renderValidationResults() {
             const container = document.getElementById('validation-results');
-            let html = '';
-
-            // Group messages by validation step
-            reportData.validationSteps.forEach(step => {
-                if (step.messages.length === 0) return;
-
-                const errors = step.messages.filter(m => m.level === 'error');
-                const warnings = step.messages.filter(m => m.level === 'warning');
-                const infos = step.messages.filter(m => m.level === 'info');
-
-                if (errors.length > 0) {
-                    html += renderMessageTable(step.resource, errors, 'Fehler');
-                }
-                if (warnings.length > 0) {
-                    html += renderMessageTable(step.resource, warnings, 'Warnungen');
-                }
-                if (infos.length > 0) {
-                    html += renderMessageTable(step.resource, infos, 'Informationen');
-                }
+            
+            // Collect all messages from all steps
+            const allMessages = [];
+            reportData.validationSteps?.forEach(step => {
+                step.messages?.forEach(msg => {
+                    allMessages.push({
+                        ...msg,
+                        resource: step.resource,
+                        stepId: step.id,
+                        stepValid: step.valid
+                    });
+                });
             });
-
-            if (html === '') {
-                html = `
+            
+            if (allMessages.length === 0) {
+                container.innerHTML = `
                     <div class="table-container">
                         <div class="empty-state">
                             <div class="empty-state-icon">✓</div>
-                            <p>Keine Fehler oder Warnungen gefunden. Das Dokument ist konform.</p>
+                            <p>Keine Validierungsmeldungen gefunden.</p>
                         </div>
                     </div>
                 `;
+                return;
             }
-
-            container.innerHTML = html;
-        }
-
-        function renderMessageTable(resource, messages, type) {
-            const typeMap = {
-                'Fehler': 'error',
-                'Warnungen': 'warning',
-                'Informationen': 'info'
-            };
-            const levelClass = typeMap[type];
-            const icon = type === 'Fehler' ? '🔴' : type === 'Warnungen' ? '🟠' : 'ℹ';
-
-            let html = `
-                <div class="table-container">
-                    <h3>${icon} ${type} (${messages.length})</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th style="width: 15%;">Code</th>
-                                <th style="width: 10%;">Grad</th>
-                                <th style="width: 75%;">Nachricht</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-
-            messages.forEach(msg => {
-                const levelBadge = `<span class="level-badge level-${msg.level}">${msg.level}</span>`;
-                const codeSpan = msg.code ? `<span class="code">${msg.code}</span>` : '—';
-                const lineInfo = msg.line ? ` (Zeile: ${msg.line}, Spalte: ${msg.column})` : '';
-                
+            
+            // Show all messages in a single table, grouped by step
+            let html = '<div class="table-container">';
+            html += '<h3>📋 Validierungsergebnisse im Detail</h3>';
+            html += '<table>';
+            html += '<thead><tr><th>Position</th><th>Code</th><th>Adj. Grad</th><th>Text</th></tr></thead>';
+            html += '<tbody>';
+            
+            // Group messages by validation step
+            const steps = {};
+            allMessages.forEach(msg => {
+                if (!steps[msg.stepId]) {
+                    steps[msg.stepId] = {
+                        resource: msg.resource,
+                        valid: msg.stepValid,
+                        messages: []
+                    };
+                }
+                steps[msg.stepId].messages.push(msg);
+            });
+            
+            // Display messages grouped by step
+            Object.entries(steps).forEach(([stepId, stepData], stepIndex) => {
+                // Add step header
                 html += `
-                    <tr>
-                        <td>${codeSpan}</td>
-                        <td>${levelBadge}</td>
-                        <td>
-                            <div class="message-text">${msg.text}${lineInfo}</div>
+                    <tr style="background-color: #f8f9fa;">
+                        <td colspan="4" style="font-weight: 600; padding: 10px;">
+                            ${stepIndex + 1}. Validierungsschritt: ${stepData.resource || stepId}
+                            ${stepData.valid ? '✓' : '✗'}
                         </td>
                     </tr>
                 `;
+                
+                // Add messages for this step
+                stepData.messages.forEach((msg, msgIndex) => {
+                    const levelClass = `level-${msg.original_level?.toLowerCase() || 'info'}`;
+                    const levelBadge = `<span class="level-badge ${levelClass}">${msg.original_level || 'info'}</span>`;
+                    const codeSpan = msg.code ? `<span class="code">${msg.code}</span>` : '—';
+                    
+                    // Extract path from message text if present
+                    let messageText = msg.text || '';
+                    let pathInfo = '';
+                    
+                    // Check if message contains "Pfad:" and extract it
+                    const pathMatch = messageText.match(/Pfad:\s*(.+)$/);
+                    if (pathMatch) {
+                        messageText = messageText.replace(/Pfad:\s*.+$/, '').trim();
+                        pathInfo = `<div class="message-path">Pfad: ${pathMatch[1]}</div>`;
+                    }
+                    
+                    html += `
+                        <tr>
+                            <td style="width: 10%;">${stepIndex + 1}.${msgIndex + 1}</td>
+                            <td style="width: 15%;">${codeSpan}</td>
+                            <td style="width: 10%;">${levelBadge}</td>
+                            <td style="width: 65%;">
+                                <div class="message-text">${messageText}</div>
+                                ${pathInfo}
+                            </td>
+                        </tr>
+                    `;
+                });
             });
-
-            html += `
-                        </tbody>
-                    </table>
-                </div>
-            `;
-
-            return html;
+            
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
         }
 
         function downloadReport() {
@@ -528,6 +697,7 @@
 
         // Render all sections
         renderStatusBanner();
+        renderStatistics();
         renderDocumentInfo();
         renderValidationResults();
     </script>

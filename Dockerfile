@@ -1,24 +1,24 @@
-# Nutze ein JRE-Image als Basis, da wir Java für den Validator brauchen
+# Get JRE-Image as basis to use Validator.jar
 FROM eclipse-temurin:17-jre-focal
 
-# Installiere Python und Pip
+# Install Python und Pip
 RUN apt-get update && apt-get install -y python3 python3-pip && rm -rf /var/lib/apt/lists/*
 
-# Arbeitsverzeichnis
+# Work directory
 WORKDIR /app
 
-# Kopiere App-Dateien
+# Copy app data
 COPY app/ /app/
 COPY app/validator.jar /app/validator.jar
 
-# Installiere Python-Abhängigkeiten
+# Install Python dependencies
 RUN pip3 install fastapi uvicorn jinja2 python-multipart
 
-# Verzeichnisse für Validator
+# Validator directories
 RUN mkdir -p /scenarios /tmp/uploads /tmp/reports
 
-# Exponiere Port
+# Expose port
 EXPOSE 8080
 
-# Startbefehl
+# Start command
 CMD ["python3", "main.py"]
