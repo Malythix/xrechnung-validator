@@ -303,116 +303,75 @@ def categorize_error(code, text, resource):
 
 @app.post("/validate", response_class=HTMLResponse)
 async def validate(request: Request, file: UploadFile = File(...)):
+    """
+    Handles the uploaded e-invoice, executes the KoSIT validator, 
+    and returns the parsed results.
+    """
+    # Generate a unique ID to prevent filename collisions and report mix-ups
     file_id = str(uuid.uuid4())
-    input_path = os.path.join(UPLOAD_DIR, f"{file_id}_{file.filename}")
+    input_filename = f"{file_id}.xml" 
+    input_path = os.path.join(UPLOAD_DIR, input_filename)
     
     try:
-        # Write uploaded file
+        # Step 1: Securely save the uploaded file to the temporary directory
+        content = await file.read()
         with open(input_path, "wb") as f:
-            f.write(await file.read())
+            f.write(content)
         
-        
-        # Generate unique report name
-        unique_report_name = f"report_{file_id}.xml"
-        report_path = os.path.join(REPORT_DIR, unique_report_name)
-
-        # Execute validator
+        # Step 2: Prepare the Java command. Note: We use the unique file_id 
+        # as the input name so the validator generates a unique report.
         cmd = [
             "java", "-jar", VALIDATOR_JAR,
             "-s", os.path.join(SCENARIOS_DIR, "scenarios.xml"),
             "-o", REPORT_DIR,
-            "-n", unique_report_name,  # Die meisten Validator-JARs unterstützen -n für den Dateinamen
             input_path
         ]
         
+        # Execute the process. We do not immediately check the returncode because 
+        # content-related rejections (REJECT) often return a non-zero exit code.
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
-        success = result.returncode == 0
-        
-        # Find the generated report - XRechnung validator uses input filename for output
+
+        # Step 3: Locate the generated XML report.
+        # The validator typically creates a file containing the input filename in its name.
         report_path = None
-        base_name = os.path.splitext(file.filename)[0]
-        
-        # Try different patterns for report file
-        possible_patterns = [
-            os.path.join(REPORT_DIR, f"{base_name}_report.xml"),
-            os.path.join(REPORT_DIR, f"{base_name}.xml"),
-            os.path.join(REPORT_DIR, f"report_{base_name}.xml"),
-            os.path.join(REPORT_DIR, f"validation_report_{file_id}.xml")
-        ]
-        
-        for pattern in possible_patterns:
-            if os.path.exists(pattern):
-                report_path = pattern
+        for f in os.listdir(REPORT_DIR):
+            if file_id in f and f.endswith('.xml'):
+                report_path = os.path.join(REPORT_DIR, f)
                 break
         
-        # If not found, look for any XML file containing the base name
-        if report_path is None:
-            for f in os.listdir(REPORT_DIR):
-                if f.endswith('.xml') and (base_name in f or file_id in f):
-                    report_path = os.path.join(REPORT_DIR, f)
-                    break
-        
-        report_data = None
+        # Step 4: Evaluate the result based on the existence of the report
         if report_path and os.path.exists(report_path):
+            # If a report exists, the process was successful regardless of the exit code.
             report_data = parse_xml_report(report_path)
-        else:
-            # If no report found, create a basic one from validator output
+            
+            # Attach raw validator output as a backup for debugging if parsing is incomplete
+            if not report_data or report_data.get('status') == 'fatal':
+                 report_data['validator_output'] = result.stdout + result.stderr
+        
+        elif result.returncode != 0:
+            # No report found AND process failed -> This is a genuine technical error (e.g., Java crash)
             report_data = {
-                'valid': success,
-                'status': 'error' if not success else 'success',
-                'status_description': 'Could not find validation report',
-                'recommendation': 'Validator output available below',
-                'message_stats': {'error': 0, 'warning': 0, 'info': 0, 'fatal': 0},
+                'valid': False,
+                'status': 'fatal',
+                'status_description': 'Technical Validator Failure',
+                'recommendation': 'The validation process crashed or was misconfigured.',
+                'message_stats': {'error': 1, 'warning': 0, 'info': 0, 'fatal': 1},
                 'error_categories': {},
                 'timestamp': datetime.now().isoformat(),
                 'documentReference': file.filename,
                 'documentData': {},
                 'scenario': 'N/A',
                 'validationSteps': [],
-                'assessment': {'accepted': success, 'rejected': not success},
-                'validator_output': result.stdout + result.stderr
+                'assessment': {'accepted': False, 'rejected': True},
+                'validator_output': result.stderr  # Shows CLI errors like "Unknown option"
             }
-        
-        return templates.TemplateResponse("result.html", {
-            "request": request,
-            "success": success,
-            "report_data": json.dumps(report_data, ensure_ascii=False),
-            "filename": file.filename,
-            "file_id": file_id,
-            "validator_output": result.stdout + result.stderr
-        })
-        
-    except subprocess.TimeoutExpired:
-        return templates.TemplateResponse("result.html", {
-            "request": request,
-            "success": False,
-            "report_data": json.dumps({
+        else:
+            # Process finished with 0 but no report was found (Edge case)
+            report_data = {
                 'valid': False,
-                'status': 'fatal',
-                'status_description': 'Validation timeout after 60 seconds',
-                'recommendation': 'Document processing took too long',
-                'message_stats': {'error': 0, 'warning': 0, 'info': 0, 'fatal': 1},
-                'error_categories': {},
-                'timestamp': datetime.now().isoformat(),
-                'documentReference': file.filename,
-                'documentData': {},
-                'scenario': 'N/A',
-                'validationSteps': [],
-                'assessment': {'accepted': False, 'rejected': True}
-            }, ensure_ascii=False),
-            "filename": file.filename,
-            "file_id": file_id,
-            "validator_output": "Validation timeout after 60 seconds"
-        })
-    except Exception as e:
-        return templates.TemplateResponse("result.html", {
-            "request": request,
-            "success": False,
-            "report_data": json.dumps({
-                'valid': False,
-                'status': 'fatal',
-                'status_description': f'Unexpected error: {str(e)}',
-                'recommendation': 'System error occurred during validation',
+                'status': 'error',
+                'status_description': 'Validation report not found',
+                'recommendation': 'Process finished but generated no output. Check XML structure.',
                 'message_stats': {'error': 1, 'warning': 0, 'info': 0, 'fatal': 0},
                 'error_categories': {},
                 'timestamp': datetime.now().isoformat(),
@@ -420,20 +379,37 @@ async def validate(request: Request, file: UploadFile = File(...)):
                 'documentData': {},
                 'scenario': 'N/A',
                 'validationSteps': [],
-                'assessment': {'accepted': False, 'rejected': True}
+                'assessment': {'accepted': False, 'rejected': True},
+                'validator_output': result.stdout
+            }
+        
+        # Step 5: Render the result page with the parsed data
+        return templates.TemplateResponse("result.html", {
+            "request": request,
+            "success": report_data.get('valid', False),
+            "report_data": json.dumps(report_data, ensure_ascii=False),
+            "filename": file.filename,
+            "file_id": file_id,
+            "validator_output": result.stdout + result.stderr
+        })
+        
+    except Exception as e:
+        # Final safety net for unexpected Python/System exceptions
+        return templates.TemplateResponse("result.html", {
+            "request": request,
+            "success": False,
+            "report_data": json.dumps({
+                'status': 'fatal', 
+                'status_description': f'Internal System Error: {str(e)}'
             }, ensure_ascii=False),
             "filename": file.filename,
             "file_id": file_id,
             "validator_output": str(e)
         })
     finally:
-        # Always delete the uploaded file immediately after processing
-        try:
-            if os.path.exists(input_path):
-                os.remove(input_path)
-                print(f"Deleted uploaded file: {input_path}")
-        except Exception as e:
-            print(f"Error deleting uploaded file {input_path}: {e}")
+        # Cleanup: Always delete the uploaded input file to save disk space and ensure user data privacy
+        if os.path.exists(input_path):
+            os.remove(input_path)
 
 @app.get("/download-report/{file_id}")
 async def download_report(file_id: str):
